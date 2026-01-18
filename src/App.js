@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 
 function App() {
   const [data, setData] = useState([]);
-  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
+  const API_BASE = "/api"; 
 
   useEffect(() => {
     fetch(`${API_BASE}/productos`)
       .then((r) => r.json())
-      .then(setData);
-  }, [API_BASE]);
+      .then(setData)
+      .catch(err => console.error("Error de conexión:", err));
+  }, []);
 
   // Agrupar productos por nombre y encontrar el mejor precio
   const groupedProducts = data.reduce((acc, product) => {
