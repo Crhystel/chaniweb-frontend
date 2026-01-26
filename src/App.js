@@ -12,14 +12,14 @@ function App() {
   console.log("ChaniWeb v2.0 - Frontend actualizado");
 
   useEffect(() => {
-    // Simulación de llamada a la API
+    // Llamada a la API a través del Proxy
     fetch("/api/productos")
       .then((r) => r.json())
       .then(setProducts)
       .catch((err) => console.error("Error al cargar productos:", err));
   }, []);
 
-  // Función de Categorización basada en la lista de productos de Python
+  // Función de Categorización
   const getCategory = (name) => {
     const n = name.toLowerCase();
     if (
@@ -35,7 +35,9 @@ function App() {
       n.includes("leche") ||
       n.includes("yogurt") ||
       n.includes("mantequilla") ||
-      n.includes("margarina")
+      n.includes("margarina") ||
+      n.includes("condensada") ||
+      n.includes("evaporada")
     )
       return "Lácteos";
     if (
@@ -126,7 +128,6 @@ function App() {
             Chani<span>Web</span>
           </div>
         </nav>
-
         <div className="hero-container">
           <div className="hero-text">
             <h1 className="main-title">
@@ -139,8 +140,7 @@ function App() {
               Supermaxi, Akí y Mi Comisariato en tiempo real.
             </p>
             <button className="cta-button" onClick={() => setView("search")}>
-              Empezar a ahorrar
-              <span className="arrow">→</span>
+              Empezar a ahorrar →
             </button>
           </div>
           <div className="hero-visual">
@@ -169,7 +169,6 @@ function App() {
         <div className="sidebar-logo" onClick={() => setView("landing")}>
           Chani<span>Web</span>
         </div>
-
         <nav className="cat-nav">
           <p className="nav-label">Categorías</p>
           {categories.map((cat) => (
@@ -182,7 +181,6 @@ function App() {
             </button>
           ))}
         </nav>
-
         <button className="back-home-btn" onClick={() => setView("landing")}>
           🏠 Volver al Inicio
         </button>
@@ -191,7 +189,6 @@ function App() {
       <main className="main-content">
         <header className="content-header">
           <div className="search-bar-container">
-            <span className="search-icon">🔍</span>
             <input
               type="text"
               placeholder="¿Qué producto buscas hoy?"
@@ -235,10 +232,11 @@ function App() {
                         src={best.image_url}
                         alt={name}
                         referrerPolicy="no-referrer"
-                        onError={(e) =>
-                          (e.target.src =
-                            "https://via.placeholder.com/100?text=🛒")
-                        }
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://placehold.co/100x100?text=No+Imagen";
+                        }}
                       />
                     </div>
                     <div className="product-info-text">
@@ -246,8 +244,7 @@ function App() {
                       <p>{list.length} opciones disponibles</p>
                     </div>
                     <div className="product-price-tag">
-                      <span className="dollar">$</span>
-                      {best.price.toFixed(2)}
+                      ${best.price.toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -256,19 +253,37 @@ function App() {
           </div>
         </div>
 
-        {/* --- MODAL DE DETALLE */}
+        {/* --- MODAL DE DETALLE (CORREGIDO) --- */}
         {view === "detail" && selectedProductGroup && (
-          <div className="modal-overlay" onClick={() => setView("search")}>
+          <div
+            className="modal-overlay"
+            onClick={() => {
+              setView("search");
+              setSelectedProductGroup(null);
+            }}
+          >
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button className="close-modal" onClick={() => setView("search")}>
+              <button
+                className="close-modal"
+                onClick={() => {
+                  setView("search");
+                  setSelectedProductGroup(null);
+                }}
+              >
                 ✕
               </button>
 
               <div className="modal-header-detail">
                 <div className="modal-img-container">
                   <img
-                    src={selectedProductGroup[0].image_url}
-                    alt={selectedProductGroup[0].name}
+                    src={getBestPrice(selectedProductGroup).image_url}
+                    alt="Imagen de producto"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src =
+                        "https://placehold.co/200x200?text=Sin+Imagen";
+                    }}
                   />
                 </div>
                 <div className="modal-text-container">
@@ -277,13 +292,12 @@ function App() {
                   </span>
                   <h2>{selectedProductGroup[0].name}</h2>
                   <p className="modal-subtitle">
-                    Comparativa de precios actualizados
+                    Comparativa de precios actualizada
                   </p>
                 </div>
               </div>
 
               <div className="comparison-list">
-                <p className="list-title">Precios por establecimiento:</p>
                 {selectedProductGroup
                   .sort((a, b) => a.price - b.price)
                   .map((p, i) => (
@@ -294,16 +308,19 @@ function App() {
                       <div className="store-info">
                         <span className="store-name">{p.source}</span>
                         <span className="item-qty">
-                          Envase: {p.quantity}
+                          Formato: {p.quantity}
                           {p.unit}
                         </span>
                       </div>
-                      <div className="price-info">
+                      <div
+                        className="price-info"
+                        style={{ textAlign: "right" }}
+                      >
                         <span className="item-price">
                           ${p.price.toFixed(2)}
                         </span>
                         {i === 0 && (
-                          <span className="winner-label">EL MÁS BARATO ✅</span>
+                          <span className="winner-label">MÁS BARATO ✅</span>
                         )}
                       </div>
                     </div>
